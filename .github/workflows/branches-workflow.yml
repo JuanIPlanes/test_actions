@@ -1,0 +1,43 @@
+name: Automatización del flujo de trabajo
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [dev, beta, main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configuración de Git
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+
+      - name: Merge a beta y main
+        if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'dev'
+        run: |
+          git fetch origin beta:beta
+          git checkout beta
+          git merge --no-ff --no-edit origin/dev
+          git push origin beta
+
+      - name: Merge a dev y fix
+        if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
+        run: |
+          git fetch origin dev:dev
+          git fetch origin fix:fix
+          git checkout dev
+          git merge --no-ff --no-edit origin/main
+          git push origin dev
+          git checkout fix
+          git merge --no-ff --no-edit origin/main
+          git push origin fix
+
+      - name: Eliminar rama
+        if: github.event.pull_request.merged == true
+        run: |
+          git push origin --delete ${GITHUB_HEAD_REF}
