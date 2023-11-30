@@ -1,0 +1,45 @@
+name: Abrir PR automáticamente
+
+on:
+  push:
+    branches-ignore:
+      - 'develop'
+
+jobs:
+  open_pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Verificar rama base
+        id: check_base
+        run: |
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          BASE_BRANCH=$(git merge-base --fork-point origin/develop origin/$BRANCH_NAME)
+          if [ -z "$BASE_BRANCH" ]; then
+            echo "::set-output name=is_based_on_develop::false"
+          else
+            echo "::set-output name=is_based_on_develop::true"
+          fi
+
+      - name: Crear PR
+        if: steps.check_base.outputs.is_based_on_develop == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_BRANCH=${GITHUB_REF#refs/heads/}
+          PR_TITLE="Nueva funcionalidad en $PR_BRANCH"
+          PR_BODY="Este PR fue abierto automáticamente por GitHub Actions."
+          
+          curl \
+            -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls \
+            -d '{
+              "title": "'"$PR_TITLE"'",
+              "body": "'"$PR_BODY"'",
+              "head": "'"$PR_BRANCH"'",
+              "base": "develop"
+            }'
