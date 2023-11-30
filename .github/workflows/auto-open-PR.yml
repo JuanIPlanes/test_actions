@@ -3,7 +3,7 @@ name: Abrir PR automáticamente
 on:
   push:
     branches-ignore:
-      - 'develop'
+      - 'dev'
 
 jobs:
   open_pr:
@@ -16,15 +16,15 @@ jobs:
         id: check_base
         run: |
           BRANCH_NAME=${GITHUB_REF#refs/heads/}
-          BASE_BRANCH=$(git merge-base --fork-point origin/develop origin/$BRANCH_NAME)
+          BASE_BRANCH=$(git merge-base --fork-point origin/dev origin/$BRANCH_NAME)
           if [ -z "$BASE_BRANCH" ]; then
-            echo "::set-output name=is_based_on_develop::false"
+            echo "::set-output name=is_based_on_dev::false"
           else
-            echo "::set-output name=is_based_on_develop::true"
+            echo "::set-output name=is_based_on_dev::true"
           fi
 
       - name: Crear PR
-        if: steps.check_base.outputs.is_based_on_develop == 'true'
+        if: steps.check_base.outputs.is_based_on_dev == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -41,5 +41,5 @@ jobs:
               "title": "'"$PR_TITLE"'",
               "body": "'"$PR_BODY"'",
               "head": "'"$PR_BRANCH"'",
-              "base": "develop"
+              "base": "dev"
             }'
