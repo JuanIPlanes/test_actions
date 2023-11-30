@@ -1,11 +1,6 @@
 name: Abrir PR automáticamente
 
-on:
-  push:
-    branches-ignore:
-      - 'main'
-      - 'fix'
-      - 'beta'
+on: push
 
 jobs:
   open_pr:
