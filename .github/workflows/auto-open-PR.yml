@@ -1,45 +1,94 @@
-name: Abrir PR automáticamente
+name: Automatizar flujo de trabajo
 
-on: push
+on:
+  push:
+    branches:
+      - '**' # Esto se activará en cualquier rama
 
 jobs:
-  open_pr:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3 # Asegúrate de usar la última versión
 
-      - name: Fetch all branches
-        run: git fetch --all
-
-      - name: Verificar rama base
-        id: check_base
+      - name: Configurar Git
         run: |
-          BRANCH_NAME=${GITHUB_REF#refs/heads/}
-          BASE_BRANCH=$(git merge-base --fork-point origin/dev origin/$BRANCH_NAME)
-          if [ -z "$BASE_BRANCH" ]; then
-            echo "::set-output name=is_based_on_dev::false"
-          else
-            echo "::set-output name=is_based_on_dev::true"
-          fi
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
 
-      - name: Crear PR
-        if: steps.check_base.outputs.is_based_on_dev == 'true'
+      - name: Crear PR para dev
+        if: "startsWith(github.ref, 'refs/heads/dev/') && contains(github.event.head_commit.message, 'feat')" # Si el push fue a una rama hija de dev y el commit es de tipo feat
+        uses: repo-sync/pull-request@v2
+        with:
+          destination_branch: "dev" # Rama a la que se fusionará
+          pr_title: "PR automático para dev"
+          pr_body: "Este es un PR automático creado por GitHub Actions."
+          pr_label: "automerge" # Etiqueta para el PR
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge dev a beta
+        if: "github.event.pull_request.merged && github.event.pull_request.base.ref == 'dev'" # Si el PR fue fusionado y la rama base era dev
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.repos.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base: 'beta',
+              head: 'dev'
+            })
+
+      - name: Merge fix a beta
+        if: "startsWith(github.ref, 'refs/heads/fix/') && contains(github.event.head_commit.message, 'fix')" # Si el push fue a una rama hija de fix y el commit es de tipo fix
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.repos.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base: 'beta',
+              head: github.ref
+            })
+
+      - name: Merge beta a main
+        if: "github.event.pull_request.merged && github.event.pull_request.base.ref == 'beta'" # Si el PR fue fusionado y la rama base era beta
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.repos.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base: 'main',
+              head: 'beta'
+            })
+
+      - name: Merge main a fix y dev
+        if: "github.event.pull_request.merged && github.event.pull_request.base.ref == 'main'" # Si el PR fue fusionado y la rama base era main
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.repos.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base: 'fix',
+              head: 'main'
+            })
+            github.repos.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base: 'dev',
+              head: 'main'
+            })
+
+      - name: Notificación de Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took # Campos que se mostrarán en la notificación de Slack
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PR_BRANCH=${GITHUB_REF#refs/heads/}
-          PR_TITLE="Nueva funcionalidad en $PR_BRANCH"
-          PR_BODY="Este PR fue abierto automáticamente por GitHub Actions."
-          
-          curl \
-            -X POST \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls \
-            -d '{
-              "title": "'"$PR_TITLE"'",
-              "body": "'"$PR_BODY"'",
-              "head": "'"$PR_BRANCH"'",
-              "base": "dev"
-            }'
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} # Necesitarás configurar esta URL de webhook en las configuraciones de tu repositorio
