@@ -25,13 +25,13 @@ jobs:
           pr_title: "PR automático para dev"
           pr_body: "Este es un PR automático creado por GitHub Actions."
           pr_label: "automerge" # Etiqueta para el PR
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GH_TOKEN }}
 
       - name: Merge dev a beta
         if: "github.event.pull_request.merged && github.event.pull_request.base.ref == 'dev'" # Si el PR fue fusionado y la rama base era dev
         uses: actions/github-script@v5
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          github-token: ${{secrets.GH_TOKEN}}
           script: |
             github.repos.merge({
               owner: context.repo.owner,
@@ -44,7 +44,7 @@ jobs:
         if: "startsWith(github.ref, 'refs/heads/fix/') && contains(github.event.head_commit.message, 'fix')" # Si el push fue a una rama hija de fix y el commit es de tipo fix
         uses: actions/github-script@v5
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          github-token: ${{secrets.GH_TOKEN}}
           script: |
             github.repos.merge({
               owner: context.repo.owner,
@@ -57,7 +57,7 @@ jobs:
         if: "github.event.pull_request.merged && github.event.pull_request.base.ref == 'beta'" # Si el PR fue fusionado y la rama base era beta
         uses: actions/github-script@v5
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          github-token: ${{secrets.GH_TOKEN}}
           script: |
             github.repos.merge({
               owner: context.repo.owner,
@@ -70,7 +70,7 @@ jobs:
         if: "github.event.pull_request.merged && github.event.pull_request.base.ref == 'main'" # Si el PR fue fusionado y la rama base era main
         uses: actions/github-script@v5
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          github-token: ${{secrets.GH_TOKEN}}
           script: |
             github.repos.merge({
               owner: context.repo.owner,
