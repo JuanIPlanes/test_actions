@@ -53,16 +53,15 @@ jobs:
               head: github.ref
             })
 
-      - name: Merge branches
+      - name: Handle Main Branches
         if: github.ref == 'refs/heads/main'
         uses: actions/github-script@v5
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
           script: |
-            const octokit = github.getOctokit(core.getInput('GH_TOKEN'))
             async function handle_changes(branch) {
-              const { data: comparison } = await octokit.rest.repos.compareCommits({
+              const { data: comparison } = await github.rest.repos.compareCommits({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 base: 'main',
@@ -70,7 +69,7 @@ jobs:
               });
               if (comparison.total_commits > 0) {
                 console.log(`Changes detected between main and ${branch}`);
-                await octokit.repos.merge({
+                await github.rest.repos.merge({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   base: branch,
@@ -82,6 +81,7 @@ jobs:
             }
             handle_changes('develop');
             handle_changes('fix');
+
 
       - name: Create Issue
         if: failure()
