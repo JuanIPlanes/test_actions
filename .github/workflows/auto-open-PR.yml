@@ -57,7 +57,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: actions/github-script@v5
         env:
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           script: |
             async function handle_changes(branch) {
