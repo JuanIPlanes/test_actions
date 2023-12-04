@@ -87,17 +87,16 @@ jobs:
         if: failure()
         uses: actions/github-script@v5
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
           script: |
-            const octokit = github.getOctokit(process.env.GH_TOKEN)
             const issue = {
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: "Merge Failed",
               body: "The automatic merge failed. Please check and resolve the conflict manually."
             };
-            octokit.rest.issues.create(issue);
+            github.rest.issues.create(issue);
 
       - name: Notificación de Slack
         uses: 8398a7/action-slack@v3
