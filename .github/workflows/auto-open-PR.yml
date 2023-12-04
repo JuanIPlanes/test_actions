@@ -79,7 +79,7 @@ jobs:
                 console.log(`No changes detected between main and ${branch}`);
               }
             }
-            handle_changes('develop');
+            handle_changes('dev');
             handle_changes('fix');
 
 
