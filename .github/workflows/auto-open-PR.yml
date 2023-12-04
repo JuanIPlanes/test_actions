@@ -53,14 +53,14 @@ jobs:
               head: github.ref
             })
 
-      - name: Handle Main Changes
+      - name: Merge branches
         if: github.ref == 'refs/heads/main'
         uses: actions/github-script@v5
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           script: |
-            const octokit = github.getOctokit(process.env.GH_TOKEN)
+            const octokit = github.getOctokit(core.getInput('GH_TOKEN'))
             async function handle_changes(branch) {
               const { data: comparison } = await octokit.rest.repos.compareCommits({
                 owner: context.repo.owner,
