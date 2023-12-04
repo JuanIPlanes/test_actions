@@ -41,7 +41,7 @@ jobs:
             })
 
       - name: Merge fix a beta
-        if: "startsWith(github.ref, 'refs/heads/fix/') && contains(github.event.head_commit.message, 'fix')" # Si el push fue a una rama hija de fix y el commit es de tipo fix
+        if: "startsWith(github.ref, 'refs/heads/fix') && contains(github.event.head_commit.message, 'fix')" # Si el push fue a una rama hija de fix y el commit es de tipo fix
         uses: actions/github-script@v5
         with:
           github-token: ${{secrets.GH_TOKEN}}
@@ -53,37 +53,51 @@ jobs:
               head: github.ref
             })
 
-      - name: Merge beta a main
-        if: "github.event.pull_request.merged && github.event.pull_request.base.ref == 'beta'" # Si el PR fue fusionado y la rama base era beta
+      - name: Handle Main Changes
+        if: github.ref == 'refs/heads/main'
         uses: actions/github-script@v5
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
-          github-token: ${{secrets.GH_TOKEN}}
           script: |
-            github.repos.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              base: 'main',
-              head: 'beta'
-            })
+            const octokit = github.getOctokit(process.env.GH_TOKEN)
+            async function handle_changes(branch) {
+              const { data: comparison } = await octokit.rest.repos.compareCommits({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                base: 'main',
+                head: branch,
+              });
+              if (comparison.total_commits > 0) {
+                console.log(`Changes detected between main and ${branch}`);
+                await octokit.repos.merge({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  base: branch,
+                  head: 'main'
+                });
+              } else {
+                console.log(`No changes detected between main and ${branch}`);
+              }
+            }
+            handle_changes('develop');
+            handle_changes('fix');
 
-      - name: Merge main a fix y dev
-        if: "github.event.pull_request.merged && github.event.pull_request.base.ref == 'main'" # Si el PR fue fusionado y la rama base era main
+      - name: Create Issue
+        if: failure()
         uses: actions/github-script@v5
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
-          github-token: ${{secrets.GH_TOKEN}}
           script: |
-            github.repos.merge({
+            const octokit = github.getOctokit(process.env.GH_TOKEN)
+            const issue = {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              base: 'fix',
-              head: 'main'
-            })
-            github.repos.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              base: 'dev',
-              head: 'main'
-            })
+              title: "Merge Failed",
+              body: "The automatic merge failed. Please check and resolve the conflict manually."
+            };
+            octokit.rest.issues.create(issue);
 
       - name: Notificación de Slack
         uses: 8398a7/action-slack@v3
