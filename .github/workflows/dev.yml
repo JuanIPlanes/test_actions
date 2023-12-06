@@ -21,7 +21,7 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-
+          
       - name: Crear PR para dev o fix
         run: |
           gh_pr_up() { gh pr create $* || gh pr edit $* }
@@ -31,4 +31,4 @@ jobs:
             gh_pr_up --title "PR automático" --body "Este es un PR automático creado por GitHub Actions." --base 'dev'
           fi
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }
