@@ -46,18 +46,36 @@ jobs:
               head: 'fix'
             })
 
-      - name: Merge beta a main
-        if: "github.event.pull_request.merged && github.event.pull_request.base.ref == 'beta'" # Si el PR fue fusionado y la rama base era beta
+      - name: Handle Main Branches
+        if: github.ref == 'refs/heads/main'
         uses: actions/github-script@v5
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           github-token: ${{secrets.GH_TOKEN}}
           script: |
-            github.repos.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              base: 'main',
-              head: 'beta'
-            })
+            async function handle_changes(branch) {
+              const { data: comparison } = await github.rest.repos.compareCommits({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                base: 'main',
+                head: branch,
+              });
+              if (comparison.total_commits > 0) {
+                console.log(`Changes detected between main and ${branch}`);
+                await github.rest.repos.merge({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  base: branch,
+                  head: 'main'
+                });
+              } else {
+                console.log(`No changes detected between main and ${branch}`);
+              }
+            }
+            handle_changes('dev');
+            handle_changes('fix');
+
 
       - name: Merge branches
         if: github.ref == 'refs/heads/main'
@@ -88,7 +106,18 @@ jobs:
             handle_changes('develop');
             handle_changes('fix');
 
-
+      - name: Create Issue
+        if: failure()
+        with:
+          script: |
+            const issue = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "Merge Failed",
+              body: "The automatic merge failed. Please check and resolve the conflict manually."
+            };
+            github.rest.issues.create(issue);
+            
       - name: Notificación de Slack
         uses: 8398a7/action-slack@v3
         with:
