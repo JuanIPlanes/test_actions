@@ -21,28 +21,6 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          
-      on:
-  push:
-    branches-ignore:
-      - 'main'
-      - 'beta'
-      - 'dev'
-      - 'fix'
-
-permissions:
-  pull-requests: write
-
-jobs:
-  pull-request:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Configurar Git
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
 
       - name: Crear PR para dev o fix
         run: |
