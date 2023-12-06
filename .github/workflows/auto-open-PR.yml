@@ -23,9 +23,9 @@ jobs:
       - name: Crear PR para dev o fix
         run: |
           gh_pr_up() { gh pr create $* || gh pr edit $* }
-          if [[ contains(github.event.head_commit.message, 'fix') && (startsWith(github.ref, 'refs/heads/hotfix') || startsWith(github.ref, 'refs/heads/bugfix')) ]]; then
+          if [[ "${{ github.event.head_commit.message }}" == *"fix"* && ("${{ github.ref }}" == refs/heads/hotfix/* || "${{ github.ref }}" == refs/heads/bugfix/*) ]]; then
             gh_pr_up --title "PR automático" --body "Este es un PR automático creado por GitHub Actions." --base 'fix'
-          elif [[ contains(github.event.head_commit.message, 'feat') ]]; then
+          elif [[ "${{ github.event.head_commit.message }}" == *"feat"* ]]; then
             gh_pr_up --title "PR automático" --body "Este es un PR automático creado por GitHub Actions." --base 'dev'
           fi
         env:
