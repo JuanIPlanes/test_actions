@@ -1,28 +1,31 @@
-name: Flujo de trabajo para dev
+name: Flujo de trabajo para ramas de características
 
 on:
   push:
-    branches:
-      - 'dev/**' # Esto se activará en cualquier rama hija de dev
+    branches-ignore:
+      - 'main'
+      - 'beta'
+      - 'dev'
+      - 'fix'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configurar Git
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
 
-      - name: Crear PR para dev
-        if: "contains(github.event.head_commit.message, 'feat')" # Si el commit es de tipo feat
-        uses: repo-sync/pull-request@v2
+      - name: Crear PR para dev o fix
+        uses: repo-sync/pull-request@v3
         with:
-          destination_branch: "dev" # Rama a la que se fusionará
-          pr_title: "PR automático para dev"
-          pr_body: "Este es un PR automático creado por GitHub Actions."
-          pr_label: "automerge" # Etiqueta para el PR
           github_token: ${{ secrets.GH_TOKEN }}
+          pr_label: "automerge" # Etiqueta para el PR
+          pr_title: "PR automático"
+          pr_body: "Este es un PR automático creado por GitHub Actions."
+          destination_branch: >-
+            ${{ contains(github.event.head_commit.message, 'fix') && (startsWith(github.ref, 'refs/heads/hotfix') || startsWith(github.ref, 'refs/heads/bugfix')) ? 'fix' : 'dev' }}
