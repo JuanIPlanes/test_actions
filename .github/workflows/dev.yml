@@ -20,12 +20,22 @@ jobs:
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
 
-      - name: Crear PR para dev o fix
+      - name: Crear PR para dev
+        if: contains(github.event.head_commit.message, 'feat') || (!startsWith(github.ref, 'refs/heads/hotfix') && !startsWith(github.ref, 'refs/heads/bugfix'))
         uses: repo-sync/pull-request@v3
         with:
           github_token: ${{ secrets.GH_TOKEN }}
           pr_label: "automerge" # Etiqueta para el PR
           pr_title: "PR automático"
           pr_body: "Este es un PR automático creado por GitHub Actions."
-          destination_branch: >-
-            ${{ contains(github.event.head_commit.message, 'fix') && (startsWith(github.ref, 'refs/heads/hotfix') || startsWith(github.ref, 'refs/heads/bugfix')) ? 'fix' : 'dev' }}
+          destination_branch: 'dev'
+      
+      - name: Crear PR para fix
+        if: contains(github.event.head_commit.message, 'fix') && (startsWith(github.ref, 'refs/heads/hotfix') || startsWith(github.ref, 'refs/heads/bugfix'))
+        uses: repo-sync/pull-request@v3
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          pr_label: "automerge" # Etiqueta para el PR
+          pr_title: "PR automático"
+          pr_body: "Este es un PR automático creado por GitHub Actions."
+          destination_branch: 'fix'
