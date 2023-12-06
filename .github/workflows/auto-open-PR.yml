@@ -59,6 +59,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
+          github-token: ${{secrets.GH_TOKEN}}
           script: |
             async function handle_changes(branch) {
               const { data: comparison } = await github.rest.repos.compareCommits({
@@ -89,6 +90,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
+          github-token: ${{secrets.GH_TOKEN}}
           script: |
             const issue = {
               owner: context.repo.owner,
