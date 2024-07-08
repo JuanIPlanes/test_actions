@@ -4,9 +4,13 @@ on:
   merge_group: 
     branches: 
       - main
-      - beta
   pull_request:
-    types: [opened, closed, reopened]
+    types: [opened, closed, reopened, merged]
+  push:
+    branches-ignore:
+      - 'main'
+  delete:
+    branches: ['*']
 
 jobs:
   msg:
@@ -28,6 +32,9 @@ jobs:
           echo "TIME=$(TZ=America/Argentina/Buenos_Aires date +'%a, %d %b %Y %H:%M')" >> $GITHUB_ENV
           if [ "${{ github.event.pull_request.state }}" = "open" ]; then
             echo "PR_STATE_EMOJI=🟢" >> $GITHUB_ENV
+          elif [ "${{ github.event.pull_request.merged }}" = "true" ]; then
+            echo "PR_STATE=merged" >> $GITHUB_ENV
+            echo "PR_STATE_EMOJI=🟣" >> $GITHUB_ENV
           elif [ "${{ github.event.pull_request.state }}" = "closed" ]; then
             echo "PR_STATE_EMOJI=🔴" >> $GITHUB_ENV
           elif [ "${{ github.event.pull_request.state }}" = "reopened" ]; then
@@ -92,6 +99,88 @@ jobs:
                   {
                     "type": "mrkdwn",
                     "text": "*To:*\n${{ env.PR_TO_BRANCH }}"
+                  }
+                ]
+              }
+            ]
+          }' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  check_direct_push:
+    name: Check for Direct Push to Main Branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if direct push to main
+        if: github.event.ref == 'refs/heads/main'
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Direct Push to Main Branch Detected*"
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Repository:*\n${{ github.repository }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Pusher:*\n${{ github.actor }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Branch:*\nmain"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Time:*\n$(TZ=America/Argentina/Buenos_Aires date +'%a, %d %b %Y %H:%M:%S %Z')"
+                  }
+                ]
+              }
+            ]
+          }' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  notify_branch_deleted:
+    name: Notify Branch Deletion
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack
+        if: github.event_name == 'delete'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Branch Deletion Notification*"
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Repository:*\n${{ github.repository }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*User:*\n${{ github.actor }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Branch:*\n${{ github.ref }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": ":warning: Branch `${{ github.ref }}` has been deleted by `${{ github.actor }}`"
                   }
                 ]
               }
