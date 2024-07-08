@@ -53,7 +53,8 @@ jobs:
                 "text": {
                   "type": "mrkdwn",
                   "text": "*Pull Request Notification from GitHub*"
-                }
+                },
+          "border_color": "#36a64f"
               },
               {
                 "type": "context",
@@ -90,15 +91,15 @@ jobs:
                   },
                   {
                     "type": "mrkdwn",
-                    "text": "*Time:*\n${{ env.TIME }}"
-                  },
-                  {
-                    "type": "mrkdwn",
                     "text": "*From:*\n${{ env.PR_FROM_BRANCH }}"
                   },
                   {
                     "type": "mrkdwn",
                     "text": "*To:*\n${{ env.PR_TO_BRANCH }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Time:*\n${{ env.TIME }}"
                   }
                 ]
               }
@@ -119,7 +120,8 @@ jobs:
                 "text": {
                   "type": "mrkdwn",
                   "text": "*Direct Push to Main Branch Detected*"
-                }
+                },
+          "border_color": "#ed1e45"
               },
               {
                 "type": "section",
@@ -138,7 +140,7 @@ jobs:
                   },
                   {
                     "type": "mrkdwn",
-                    "text": "*Time:*\n$(TZ=America/Argentina/Buenos_Aires date +'%a, %d %b %Y %H:%M:%S %Z')"
+                    "text": "*Time:*\n$(TZ=America/Argentina/Buenos_Aires date +'%a, %d %b %Y %H:%M')"
                   }
                 ]
               }
@@ -160,8 +162,9 @@ jobs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "*Branch Deletion Notification*"
-                }
+                  "text": "*Branch Deletion Notification* \n:warning: Branch `${{ env.PR_FROM_BRANCH }}` has been deleted by `${{ github.actor }}`"
+                },
+          "border_color": "#ed1e45"
               },
               {
                 "type": "section",
@@ -177,10 +180,6 @@ jobs:
                   {
                     "type": "mrkdwn",
                     "text": "*Branch:*\n${{ github.ref }}"
-                  },
-                  {
-                    "type": "mrkdwn",
-                    "text": ":warning: Branch `${{ github.ref }}` has been deleted by `${{ github.actor }}`"
                   }
                 ]
               }
