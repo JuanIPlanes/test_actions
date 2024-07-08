@@ -53,8 +53,7 @@ jobs:
                 "text": {
                   "type": "mrkdwn",
                   "text": "*Pull Request Notification from GitHub*"
-                },
-                "border_color": "#36a64f"
+                }
               },
               {
                 "type": "context",
