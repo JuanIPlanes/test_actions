@@ -4,6 +4,7 @@ on:
   merge_group: 
     branches: 
       - main
+      - beta
   pull_request:
     types: [opened, closed, reopened]
 
@@ -22,7 +23,16 @@ jobs:
           echo "PR_STATE=${{ github.event.pull_request.state }}" >> $GITHUB_ENV
           echo "PR_URL=https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           echo "REPO=${{ github.repository }}" >> $GITHUB_ENV
+          echo "PR_FROM_BRANCH=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
+          echo "PR_TO_BRANCH=${{ github.event.pull_request.base.ref }}" >> $GITHUB_ENV
           echo "TIME=$(TZ=America/Argentina/Buenos_Aires date +'%a, %d %b %Y %H:%M')" >> $GITHUB_ENV
+          if [ "${{ github.event.pull_request.state }}" = "open" ]; then
+            echo "PR_STATE_EMOJI=🟢" >> $GITHUB_ENV
+          elif [ "${{ github.event.pull_request.state }}" = "closed" ]; then
+            echo "PR_STATE_EMOJI=🔴" >> $GITHUB_ENV
+          elif [ "${{ github.event.pull_request.state }}" = "reopened" ]; then
+            echo "PR_STATE_EMOJI=🟠" >> $GITHUB_ENV
+          fi
 
       - name: Send PR Message to Slack
         if: github.event_name == 'pull_request'
@@ -35,7 +45,7 @@ jobs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "*Pull Request Notification*"
+                  "text": "*Pull Request Notification from GitHub*"
                 }
               },
               {
@@ -69,47 +79,19 @@ jobs:
                   },
                   {
                     "type": "mrkdwn",
-                    "text": "*State:*\n${{ env.PR_STATE }}"
+                    "text": "*State:*\n${{ env.PR_STATE }} ${{ env.PR_STATE_EMOJI }}"
                   },
                   {
                     "type": "mrkdwn",
                     "text": "*Time:*\n${{ env.TIME }}"
-                  }
-                ]
-              }
-            ]
-          }' ${{ secrets.SLACK_WEBHOOK_URL }}
-
-      - name: Check for Direct Push to Main Branch
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          curl -X POST -H 'Content-type: application/json' --data '{
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*Warning: Direct Push to Main Branch*"
-                }
-              },
-              {
-                "type": "section",
-                "fields": [
-                  {
-                    "type": "mrkdwn",
-                    "text": "*Repository:*\n${{ github.repository }}"
                   },
                   {
                     "type": "mrkdwn",
-                    "text": "*Pushed by:*\n${{ github.actor }}"
+                    "text": "*From:*\n${{ env.PR_FROM_BRANCH }}"
                   },
                   {
                     "type": "mrkdwn",
-                    "text": "*Time:*\n$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-                  },
-                  {
-                    "type": "mrkdwn",
-                    "text": "*Commit URL:*\n<${{ github.event.head_commit.url }}|View Commit>"
+                    "text": "*To:*\n${{ env.PR_TO_BRANCH }}"
                   }
                 ]
               }
