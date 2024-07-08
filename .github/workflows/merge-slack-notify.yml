@@ -20,7 +20,7 @@ jobs:
           echo "PR_CREATOR=${{ github.event.pull_request.user.login }}" >> $GITHUB_ENV
           echo "PR_STATE=${{ github.event.pull_request.state }}" >> $GITHUB_ENV
           echo "PR_URL=https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}" >> $GITHUB_ENV
-          echo "TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+          echo "TIME=$(TZ=America/Argentina/Buenos_Aires date -u +'%a, %d %b %Y %H:%M:%S GMT')" >> $GITHUB_ENV
           echo "REPO=${{ github.repository }}" >> $GITHUB_ENV
 
       - name: Send PR Message to Slack
