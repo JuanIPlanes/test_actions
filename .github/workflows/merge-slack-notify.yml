@@ -1,9 +1,13 @@
 name: Notify When Branch is Merged
-on: 
-  merge_group: { branches: main }
-  pull_request:
+
+on:
+  merge_group: 
     branches: 
       - main
+      - beta
+  pull_request:
+    types: [opened, closed, reopened]
+
 jobs:
   msg:
     name: Sending Message
@@ -16,18 +20,31 @@ jobs:
         id: slack
         uses: slackapi/slack-github-action@v1.26.0
         with:
-          # For posting a rich message using Block Kit
           payload: |
             {
-              "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+              "text": "GitHub Action build result: ${{ job.status }}",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+                    "text": "*Repo:* ${{ github.repository }}\n*PR ID:* <https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}|#${{ github.event.pull_request.number }}>\n*Title:* ${{ github.event.pull_request.title }}\n*Created by:* ${{ github.event.pull_request.user.login }}\n*State:* ${{ github.event.pull_request.state }}\n*Time:* $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
                   }
                 }
               ]
             }
-      
+      - name: Check for direct push to main branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": "Warning: Direct push to main branch",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Repo:* ${{ github.repository }}\n*Pushed by:* ${{ github.actor }}\n*Time:* $(date -u +'%Y-%m-%dT%H:%M:%SZ')\n*Commit URL:* <${{ github.event.head_commit.url }}|View Commit>"
+                }
+              }
+            ]
+          }' ${{ secrets.SLACK_WEBHOOK_URL }}
