@@ -58,41 +58,60 @@ jobs:
                 "author_icon": "https://github.githubassets.com/images/modules/logos_page/Octocat.png",
                 "title": "Pull Request Notification from GitHub",
                 "text": "*${{ env.PR_CREATOR }}* created a new pull request in *${{ env.REPO }}*",
-                "fields": [
+                "blocks": [
                   {
-                    "title": "Repository",
-                    "value": "${{ env.REPO }}",
-                    "short": true
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": "*Pull Request Notification from GitHub*"
+                    }
                   },
                   {
-                    "title": "PR ID",
-                    "value": "<${{ env.PR_URL }}|#${{ env.PR_NUMBER }}>",
-                    "short": true
+                    "type": "context",
+                    "elements": [
+                      {
+                        "type": "image",
+                        "image_url": "${{ env.PR_CREATOR_IMAGE }}",
+                        "alt_text": "github user image"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*${{ env.PR_CREATOR }}* created a new pull request in *${{ env.REPO }}*"
+                      }
+                    ]
                   },
                   {
-                    "title": "Title",
-                    "value": "${{ env.PR_TITLE }}",
-                    "short": true
-                  },
-                  {
-                    "title": "State",
-                    "value": "${{ env.PR_STATE }} ${{ env.PR_STATE_EMOJI }}",
-                    "short": true
-                  },
-                  {
-                    "title": "From",
-                    "value": "${{ env.PR_FROM_BRANCH }}",
-                    "short": true
-                  },
-                  {
-                    "title": "To",
-                    "value": "${{ env.PR_TO_BRANCH }}",
-                    "short": true
-                  },
-                  {
-                    "title": "Time",
-                    "value": "${{ env.TIME }}",
-                    "short": true
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Repository:*\n${{ env.REPO }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*PR ID:*\n<${{ env.PR_URL }}|#${{ env.PR_NUMBER }}>"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Title:*\n${{ env.PR_TITLE }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*State:*\n${{ env.PR_STATE }} ${{ env.PR_STATE_EMOJI }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*From:*\n${{ env.PR_FROM_BRANCH }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*To:*\n${{ env.PR_TO_BRANCH }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Time:*\n${{ env.TIME }}"
+                      }
+                    ]
                   }
                 ]
               }
