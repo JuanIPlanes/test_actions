@@ -32,13 +32,17 @@ jobs:
           echo "TIME=$(TZ=America/Argentina/Buenos_Aires date +'%a, %d %b %Y %H:%M')" >> $GITHUB_ENV
           if [ "${{ github.event.pull_request.state }}" = "open" ]; then
             echo "PR_STATE_EMOJI=🟢" >> $GITHUB_ENV
+            echo "ATTACHMENT_COLOR=#FFFFFF" >> $GITHUB_ENV
           elif [ "${{ github.event.pull_request.merged }}" = "true" ]; then
             echo "PR_STATE=merged" >> $GITHUB_ENV
             echo "PR_STATE_EMOJI=🟣" >> $GITHUB_ENV
+            echo "ATTACHMENT_COLOR=good" >> $GITHUB_ENV
           elif [ "${{ github.event.pull_request.state }}" = "closed" ]; then
             echo "PR_STATE_EMOJI=🔴" >> $GITHUB_ENV
+            echo "ATTACHMENT_COLOR=danger" >> $GITHUB_ENV
           elif [ "${{ github.event.pull_request.state }}" = "reopened" ]; then
-            echo "PR_STATE_EMOJI=🟠" >> $GITHUB_ENV
+            echo "PR_STATE_EMOJI=#ff6723" >> $GITHUB_ENV
+            echo "ATTACHMENT_COLOR=warning" >> $GITHUB_ENV
           fi
 
       - name: Send PR Message to Slack
@@ -49,7 +53,7 @@ jobs:
           curl -X POST -H 'Content-type: application/json' --data '{
             "attachments": [
               {
-                "color": "#36a64f",
+                "color": "${{ env.ATTACHMENT_COLOR }}",
                 "author_name": "GitHub Actions",
                 "author_icon": "https://github.githubassets.com/images/modules/logos_page/Octocat.png",
                 "title": "Pull Request Notification from GitHub",
@@ -105,7 +109,7 @@ jobs:
           curl -X POST -H 'Content-type: application/json' --data '{
             "attachments": [
               {
-                "color": "#ed1e45",
+                "color": "danger",
                 "author_name": "GitHub Actions",
                 "title": "Direct Push to Main Branch Detected",
                 "fields": [
@@ -146,7 +150,7 @@ jobs:
           curl -X POST -H 'Content-type: application/json' --data '{
             "attachments": [
               {
-                "color": "#ed1e45",
+                "color": "warning",
                 "author_name": "GitHub Actions",
                 "title": "Branch Deletion Notification",
                 "text": ":warning: Branch `${{ github.event.ref }}` has been deleted by `${{ github.actor }}`",
