@@ -1,8 +1,8 @@
 name: Notify When Branch is Merged
 
 on:
-  merge_group:
-    branches:
+  merge_group: 
+    branches: 
       - main
   pull_request:
     types: [opened, closed, reopened, merged]
@@ -31,14 +31,13 @@ jobs:
           echo "PR_TO_BRANCH=${{ github.event.pull_request.base.ref }}" >> $GITHUB_ENV
           echo "TIME=$(TZ=America/Argentina/Buenos_Aires date +'%a, %d %b %Y %H:%M')" >> $GITHUB_ENV
           if [ "${{ github.event.pull_request.state }}" = "open" ]; then
-            echo "PR_STATE_EMOJI=🟢" >> $GITHUB_ENV
+            echo "COLOR=#ffffff" >> $GITHUB_ENV
           elif [ "${{ github.event.pull_request.merged }}" = "true" ]; then
-            echo "PR_STATE=merged" >> $GITHUB_ENV
-            echo "PR_STATE_EMOJI=🟣" >> $GITHUB_ENV
+            echo "COLOR=#36a64f" >> $GITHUB_ENV
           elif [ "${{ github.event.pull_request.state }}" = "closed" ]; then
-            echo "PR_STATE_EMOJI=🔴" >> $GITHUB_ENV
+            echo "COLOR=#ed1e45" >> $GITHUB_ENV
           elif [ "${{ github.event.pull_request.state }}" = "reopened" ]; then
-            echo "PR_STATE_EMOJI=🟠" >> $GITHUB_ENV
+            echo "COLOR=#ff6723" >> $GITHUB_ENV
           fi
 
       - name: Send PR Message to Slack
@@ -47,58 +46,63 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           curl -X POST -H 'Content-type: application/json' --data '{
-            "blocks": [
+            "attachments": [
               {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*Pull Request Notification from GitHub*"
-                }
-              },
-              {
-                "type": "context",
-                "elements": [
+                "color": "${{ env.COLOR }}",
+                "blocks": [
                   {
-                    "type": "image",
-                    "image_url": "${{ env.PR_CREATOR_IMAGE }}",
-                    "alt_text": "github user image"
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": "*Pull Request Notification from GitHub*"
+                    }
                   },
                   {
-                    "type": "mrkdwn",
-                    "text": "*${{ env.PR_CREATOR }}* created a new pull request in *${{ env.REPO }}*"
-                  }
-                ]
-              },
-              {
-                "type": "section",
-                "fields": [
-                  {
-                    "type": "mrkdwn",
-                    "text": "*Repository:*\n${{ env.REPO }}"
+                    "type": "context",
+                    "elements": [
+                      {
+                        "type": "image",
+                        "image_url": "${{ env.PR_CREATOR_IMAGE }}",
+                        "alt_text": "github user image"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*${{ env.PR_CREATOR }}* created a new pull request in *${{ env.REPO }}*"
+                      }
+                    ]
                   },
                   {
-                    "type": "mrkdwn",
-                    "text": "*PR ID:*\n<${{ env.PR_URL }}|#${{ env.PR_NUMBER }}>"
-                  },
-                  {
-                    "type": "mrkdwn",
-                    "text": "*Title:*\n${{ env.PR_TITLE }}"
-                  },
-                  {
-                    "type": "mrkdwn",
-                    "text": "*State:*\n${{ env.PR_STATE }} ${{ env.PR_STATE_EMOJI }}"
-                  },
-                  {
-                    "type": "mrkdwn",
-                    "text": "*From:*\n${{ env.PR_FROM_BRANCH }}"
-                  },
-                  {
-                    "type": "mrkdwn",
-                    "text": "*To:*\n${{ env.PR_TO_BRANCH }}"
-                  },
-                  {
-                    "type": "mrkdwn",
-                    "text": "*Time:*\n${{ env.TIME }}"
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Repository:*\n${{ env.REPO }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*PR ID:*\n<${{ env.PR_URL }}|#${{ env.PR_NUMBER }}>"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Title:*\n${{ env.PR_TITLE }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*State:*\n${{ env.PR_STATE }} ${{ env.PR_STATE_EMOJI }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*From:*\n${{ env.PR_FROM_BRANCH }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*To:*\n${{ env.PR_TO_BRANCH }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Time:*\n${{ env.TIME }}"
+                      }
+                    ]
                   }
                 ]
               }
@@ -113,32 +117,37 @@ jobs:
         if: github.event.ref == 'refs/heads/main'
         run: |
           curl -X POST -H 'Content-type: application/json' --data '{
-            "blocks": [
+            "attachments": [
               {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*Direct Push to Main Branch Detected*"
-                }
-              },
-              {
-                "type": "section",
-                "fields": [
+                "color": "#ed1e45",
+                "blocks": [
                   {
-                    "type": "mrkdwn",
-                    "text": "*Repository:*\n${{ github.repository }}"
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": "*Direct Push to Main Branch Detected*"
+                    }
                   },
                   {
-                    "type": "mrkdwn",
-                    "text": "*Pusher:*\n${{ github.actor }}"
-                  },
-                  {
-                    "type": "mrkdwn",
-                    "text": "*Branch:*\nmain"
-                  },
-                  {
-                    "type": "mrkdwn",
-                    "text": "*Time:*\n$(TZ=America/Argentina/Buenos_Aires date +'%a, %d %b %Y %H:%M')"
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Repository:*\n${{ github.repository }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Pusher:*\n${{ github.actor }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Branch:*\nmain"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Time:*\n$(TZ=America/Argentina/Buenos_Aires date +'%a, %d %b %Y %H:%M')"
+                      }
+                    ]
                   }
                 ]
               }
@@ -155,28 +164,33 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           curl -X POST -H 'Content-type: application/json' --data '{
-            "blocks": [
+            "attachments": [
               {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*Branch Deletion Notification* \n:warning: Branch `${{ env.PR_FROM_BRANCH }}` has been deleted by `${{ github.actor }}`"
-                }
-              },
-              {
-                "type": "section",
-                "fields": [
+                "color": "#ed1e45",
+                "blocks": [
                   {
-                    "type": "mrkdwn",
-                    "text": "*Repository:*\n${{ github.repository }}"
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": "*Branch Deletion Notification* \n:warning: Branch `${{ github.ref }}` has been deleted by `${{ github.actor }}`"
+                    }
                   },
                   {
-                    "type": "mrkdwn",
-                    "text": "*User:*\n${{ github.actor }}"
-                  },
-                  {
-                    "type": "mrkdwn",
-                    "text": "*Branch:*\n${{ github.ref }}"
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Repository:*\n${{ github.repository }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*User:*\n${{ github.actor }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Branch:*\n${{ github.ref }}"
+                      }
+                    ]
                   }
                 ]
               }
